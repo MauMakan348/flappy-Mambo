@@ -54,12 +54,64 @@ let frame = 0;
 let score = 0;
 
 // Game state
-let gameState = "start"; // "start", "play", "over"
+let gameState = "start"; // "start", "ready", "play", "over"
+
+// Kontrol mouse (desktop)
+canvas.addEventListener("click", () => {
+  if (gameState === "play") {
+    bird.velocity = bird.lift;
+    jumpSfx.currentTime = 0;
+    jumpSfx.play();
+  } else if (gameState === "ready") {
+    gameState = "play";
+  } else if (gameState === "over") {
+    resetGame();
+    gameState = "ready";
+    startBtn.style.display = "none";
+  }
+});
+
+// ✅ Kontrol layar sentuh (mobile)
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault(); // cegah scroll/zoom
+  if (gameState === "play") {
+    bird.velocity = bird.lift;
+    jumpSfx.currentTime = 0;
+    jumpSfx.play();
+  } else if (gameState === "ready") {
+    gameState = "play";
+  } else if (gameState === "over") {
+    resetGame();
+    gameState = "ready";
+    startBtn.style.display = "none";
+  }
+});
 
 // Controls
 document.addEventListener("keydown", (e) => {
   if (gameState === "play") {
     bird.velocity = bird.lift;
+    jumpSfx.currentTime = 0;
+    jumpSfx.play();
+  }
+
+  // Kalau di start → masuk ke ready
+  if (e.code === "Space" && gameState === "start") {
+    resetGame();
+    gameState = "ready"; // burung standby dulu
+    startBtn.style.display = "none";
+  }
+
+  // Kalau di ready → mulai main
+  if (e.code === "Space" && gameState === "ready") {
+    gameState = "play";
+  }
+
+  // Kalau game over → mulai lagi
+  if (e.code === "Space" && gameState === "over") {
+    resetGame();
+    gameState = "ready"; // masuk ke standby lagi
+    startBtn.style.display = "none";
   }
 
   // Tekan spasi di menu start / game over untuk mulai lagi
@@ -94,6 +146,44 @@ function gameLoop() {
   if (bgPattern) {
     ctx.fillStyle = bgPattern;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // START screen
+  if (gameState === "start") {
+    ctx.fillStyle = "#9A3F3F";
+    ctx.font = "bold 40px Roboto Black";
+    ctx.textAlign = "center";
+    ctx.fillText("FLAPPY MAMBO", canvas.width / 2, canvas.height / 3);
+
+    ctx.drawImage(
+      birdImg,
+      canvas.width / 2 - bird.w / 2,
+      canvas.height / 2 - bird.h,
+      bird.w,
+      bird.h
+    );
+
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "blue";
+    ctx.fillText(
+      "Tekan Spasi atau Klik Start",
+      canvas.width / 2,
+      canvas.height / 1.5
+    );
+  }
+
+  // READY screen → burung diam
+  if (gameState === "ready") {
+    ctx.drawImage(birdImg, bird.x, bird.y, bird.w, bird.h);
+
+    ctx.fillStyle = "black";
+    ctx.font = "20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "Tekan Spasi / Klik untuk Mulai",
+      canvas.width / 2,
+      canvas.height / 2
+    );
   }
 
   if (gameState === "start") {
@@ -191,18 +281,15 @@ function gameLoop() {
       }
 
       document.addEventListener("keydown", (e) => {
-        if (gameState === "play") {
+        if (gameState === "play" && e.code === "Space") {
           bird.velocity = bird.lift;
-          jumpSfx.currentTime = 0; // reset biar bisa diputar cepat berulang
+          jumpSfx.currentTime = 0;
           jumpSfx.play();
         }
 
-        if (
-          e.code === "Space" &&
-          (gameState === "start" || gameState === "over")
-        ) {
+        if (e.code === "Space" && gameState === "start") {
           resetGame();
-          gameState = "play";
+          gameState = "ready";
           startBtn.style.display = "none";
         }
       });
